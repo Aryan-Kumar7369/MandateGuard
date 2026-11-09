@@ -1,0 +1,247 @@
+{
+  "info": {
+    "_postman_id": "mandateguard-collection-v1",
+    "name": "MandateGuard API Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Core & Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Audit Chain Integrity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/audit/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "audit", "verify"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Audit chain is valid', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.is_valid).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Mandates & Cryptography",
+      "item": [
+        {
+          "name": "Create Parent Mandate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"user_postman_demo\",\n  \"rules\": {\n    \"cumulative_budget\": 1000.00,\n    \"approval_threshold\": 250.00,\n    \"expiry\": \"2030-12-31T23:59:59Z\",\n    \"allowed_categories\": [\"electronics\", \"software\", \"cloud\"],\n    \"merchant_constraints\": {\n      \"allow\": [\"Amazon\", \"GitHub\", \"AWS\"],\n      \"deny\": [\"UnknownVendor\"]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/mandates/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mandates", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Mandate created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('mandate_id', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke Mandate (Kill Switch)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/mandates/{{mandate_id}}/revoke",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "mandates", "{{mandate_id}}", "revoke"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Mandate revoked', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.is_revoked).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Delegations",
+      "item": [
+        {
+          "name": "Create Child Sub-Mandate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parent_mandate_id\": \"{{mandate_id}}\",\n  \"delegated_by\": \"agent_primary\",\n  \"delegated_to\": \"agent_purchaser\",\n  \"child_rules\": {\n    \"cumulative_budget\": 300.00,\n    \"approval_threshold\": 100.00,\n    \"expiry\": \"2029-12-31T23:59:59Z\",\n    \"allowed_categories\": [\"software\"],\n    \"merchant_constraints\": {\n      \"allow\": [\"GitHub\"],\n      \"deny\": []\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/delegations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "delegations", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Delegation created or blocked if parent revoked', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "    if (pm.response.code === 201) {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.environment.set('child_mandate_id', jsonData.child_mandate_id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Pre-Flight Engine",
+      "item": [
+        {
+          "name": "Pre-Flight Evaluation (ALLOW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mandate_id\": \"{{mandate_id}}\",\n  \"amount\": 50.00,\n  \"category\": \"electronics\",\n  \"merchant\": \"Amazon\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/preflight",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "preflight"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pre-flight decision evaluated', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. PayPal Integration & Disputes",
+      "item": [
+        {
+          "name": "Sync PayPal Disputes",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/disputes/sync",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "disputes", "sync"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Disputes sync completed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('synced_count');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

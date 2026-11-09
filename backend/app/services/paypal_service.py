@@ -80,3 +80,41 @@ class PayPalService:
                     detail=f"PayPal Capture failed: {response.text}"
                 )
             return response.json()
+
+    @classmethod
+    def list_disputes(cls, page_size: int = 10) -> dict:
+        _, _, base_url = cls._get_config()
+        token = cls.get_access_token()
+        url = f"{base_url}/v1/customer/disputes?page_size={page_size}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}"
+        }
+
+        with httpx.Client() as client:
+            response = client.get(url, headers=headers, timeout=10.0)
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"PayPal Disputes fetch failed: {response.text}"
+                )
+            return response.json()
+
+    @classmethod
+    def get_dispute_details(cls, dispute_id: str) -> dict:
+        _, _, base_url = cls._get_config()
+        token = cls.get_access_token()
+        url = f"{base_url}/v1/customer/disputes/{dispute_id}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}"
+        }
+
+        with httpx.Client() as client:
+            response = client.get(url, headers=headers, timeout=10.0)
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"PayPal Dispute '{dispute_id}' not found: {response.text}"
+                )
+            return response.json()

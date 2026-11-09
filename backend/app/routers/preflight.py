@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models import Mandate, Order
-from app.schemas.mandate import MandateSchema
+from app.schemas.mandate import MandateSchema, PreFlightDecision
 from app.schemas.preflight import PreFlightRequest, PreFlightResponse
 from app.services.policy_engine import PolicyEngine
+from app.services.intent_drift import IntentDriftDetector
 from app.services.audit_service import AuditService
 
 router = APIRouter(prefix="/api/v1", tags=["PreFlight"])
@@ -15,6 +16,8 @@ router = APIRouter(prefix="/api/v1", tags=["PreFlight"])
 @router.post("/preflight", response_model=PreFlightResponse)
 def evaluate_preflight(
     request: PreFlightRequest,
+    original_prompt: str | None = None,
+    cart_description: str | None = None,
     db: Session = Depends(get_db)
 ):
     mandate = db.query(Mandate).filter(Mandate.id == request.mandate_id).first()
@@ -37,9 +40,20 @@ def evaluate_preflight(
         mandate_rules=rules_schema,
         request=request,
         is_revoked=mandate.is_revoked,
+        db=db,
         signature=mandate.signature,
         current_spent=current_spent
     )
+
+    if result.decision == PreFlightDecision.ALLOW and original_prompt and cart_description:
+        drift = IntentDriftDetector.analyze_drift(
+            original_prompt=original_prompt,
+            cart_description=cart_description,
+            item_amount=float(request.amount)
+        )
+        if drift.suggested_action == PreFlightDecision.ASK_HUMAN:
+            result.decision = PreFlightDecision.ASK_HUMAN
+            result.reason = f"Intent-Drift Detected: {drift.reasoning}"
 
     AuditService.record_event(
         db=db,
@@ -49,6 +63,7 @@ def evaluate_preflight(
             "amount": float(request.amount),
             "category": request.category,
             "merchant": request.merchant,
+            "shipping_destination": request.shipping_destination,
             "decision": result.decision.value,
             "reason": result.reason
         }

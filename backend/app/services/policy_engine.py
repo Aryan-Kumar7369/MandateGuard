@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from app.schemas.mandate import MandateSchema, PreFlightDecision
 from app.schemas.preflight import PreFlightRequest, PreFlightResponse
+from app.services.crypto import CryptoService
 
 class PolicyEngine:
     @staticmethod
@@ -9,11 +10,12 @@ class PolicyEngine:
         mandate_rules: MandateSchema,
         request: PreFlightRequest,
         is_revoked: bool,
+        signature: str | None = None,
+        public_key_pem: str | None = None,
         current_spent: Decimal = Decimal("0.00")
     ) -> PreFlightResponse:
         now = datetime.now(timezone.utc)
 
-        
         if is_revoked:
             return PreFlightResponse(
                 decision=PreFlightDecision.BLOCK,
@@ -21,7 +23,16 @@ class PolicyEngine:
                 mandate_id=request.mandate_id
             )
 
-        
+        if signature and public_key_pem:
+            try:
+                CryptoService.verify_signature(signature, public_key_pem)
+            except Exception as e:
+                return PreFlightResponse(
+                    decision=PreFlightDecision.BLOCK,
+                    reason=f"Cryptographic signature verification failed: {str(e)}",
+                    mandate_id=request.mandate_id
+                )
+
         expiry = mandate_rules.expiry
         if expiry.tzinfo is None:
             expiry = expiry.replace(tzinfo=timezone.utc)
@@ -33,7 +44,6 @@ class PolicyEngine:
                 mandate_id=request.mandate_id
             )
 
-        
         merchant = request.merchant.strip().lower()
         merchant_constraints = mandate_rules.merchant_constraints
         deny_list = [m.lower() for m in merchant_constraints.get("deny", [])]
@@ -53,7 +63,6 @@ class PolicyEngine:
                 mandate_id=request.mandate_id
             )
 
-        
         category = request.category.strip().lower()
         allowed_categories = [c.lower() for c in mandate_rules.allowed_categories]
         if category not in allowed_categories:
@@ -63,7 +72,6 @@ class PolicyEngine:
                 mandate_id=request.mandate_id
             )
 
-        
         projected_total = current_spent + request.amount
         budget = Decimal(str(mandate_rules.cumulative_budget))
         if projected_total > budget:
@@ -73,7 +81,6 @@ class PolicyEngine:
                 mandate_id=request.mandate_id
             )
 
-        
         threshold = Decimal(str(mandate_rules.approval_threshold))
         if request.amount > threshold:
             return PreFlightResponse(
@@ -82,7 +89,6 @@ class PolicyEngine:
                 mandate_id=request.mandate_id
             )
 
-        
         return PreFlightResponse(
             decision=PreFlightDecision.ALLOW,
             reason="Pre-flight check passed successfully.",

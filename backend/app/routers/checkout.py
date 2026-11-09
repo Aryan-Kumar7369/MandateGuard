@@ -71,7 +71,12 @@ def execute_checkout(
         mandate_id=mandate.id,
         amount=float(order_amount),
         currency=currency,
-        status=order_status
+        status=order_status,
+        payload={
+            "category": request.category,
+            "merchant": request.merchant,
+            "reason": evaluation.reason
+        }
     )
     db.add(db_order)
     db.commit()

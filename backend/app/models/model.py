@@ -49,7 +49,7 @@ class Order(Base):
     paypal_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     mandate_id: Mapped[str] = mapped_column(String(36), ForeignKey("mandates.id"))
     amount: Mapped[float] = mapped_column(Float)
-    payload: Mapped[dict] = mapped_column(JSON)
+    payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     status: Mapped[str] = mapped_column(String(32))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

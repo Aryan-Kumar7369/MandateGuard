@@ -8,6 +8,7 @@ from app.models import Mandate, Order
 from app.schemas.mandate import MandateSchema
 from app.schemas.preflight import PreFlightRequest, PreFlightResponse
 from app.services.policy_engine import PolicyEngine
+from app.services.audit_service import AuditService
 
 router = APIRouter(prefix="/api/v1", tags=["PreFlight"])
 
@@ -23,7 +24,6 @@ def evaluate_preflight(
             detail=f"Mandate '{request.mandate_id}' not found."
         )
 
-    
     current_spent_result = (
         db.query(func.coalesce(func.sum(Order.amount), 0.0))
         .filter(Order.mandate_id == request.mandate_id, Order.status == "CAPTURED")
@@ -31,15 +31,27 @@ def evaluate_preflight(
     )
     current_spent = Decimal(str(current_spent_result))
 
-    
     rules_schema = MandateSchema(**mandate.rules)
 
-    
     result = PolicyEngine.evaluate(
         mandate_rules=rules_schema,
         request=request,
         is_revoked=mandate.is_revoked,
+        signature=mandate.signature,
         current_spent=current_spent
+    )
+
+    AuditService.record_event(
+        db=db,
+        event_type="PRE_FLIGHT_CHECK",
+        mandate_id=mandate.id,
+        payload={
+            "amount": float(request.amount),
+            "category": request.category,
+            "merchant": request.merchant,
+            "decision": result.decision.value,
+            "reason": result.reason
+        }
     )
 
     return result

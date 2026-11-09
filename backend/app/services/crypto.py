@@ -1,4 +1,6 @@
 import jwt
+import uuid
+from datetime import datetime, timezone
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 
@@ -26,11 +28,17 @@ class CryptoService:
             private_key_pem.encode("utf-8"),
             password=None
         )
-        return jwt.encode(payload, private_key, algorithm="EdDSA")
+        claims = {
+            **payload,
+            "jti": str(uuid.uuid4()),
+            "iat": datetime.now(timezone.utc),
+            "aud": "mandateguard-preflight"
+        }
+        return jwt.encode(claims, private_key, algorithm="EdDSA")
 
     @staticmethod
     def verify_signature(token: str, public_key_pem: str) -> dict:
         public_key = serialization.load_pem_public_key(
             public_key_pem.encode("utf-8")
         )
-        return jwt.decode(token, public_key, algorithms=["EdDSA"])
+        return jwt.decode(token, public_key, algorithms=["EdDSA"], audience="mandateguard-preflight")

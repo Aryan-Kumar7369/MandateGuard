@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import preflight, mandate, delegation, audit, checkout
+from app.routers import preflight, mandate, delegation, audit, checkout, dispute
 
 app = FastAPI(title="MandateGuard API", version="0.1.0")
 
@@ -8,6 +8,7 @@ app.include_router(mandate.router)
 app.include_router(delegation.router)
 app.include_router(audit.router)
 app.include_router(checkout.router)
+app.include_router(dispute.router)
 
 @app.get("/health")
 def health_check():

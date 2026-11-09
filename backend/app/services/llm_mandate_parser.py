@@ -8,8 +8,9 @@ class LLMMandateParser:
     @staticmethod
     def parse_natural_language_prompt(prompt: str) -> MandateSchema:
         api_key = os.getenv("GROQ_API_KEY")
-        base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-        
+        base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+        model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
         if not api_key:
             return LLMMandateParser._fallback_parser(prompt)
 
@@ -30,7 +31,7 @@ class LLMMandateParser:
             "Content-Type": "application/json"
         }
         body = {
-            "model": "llama-3.3-70b-versatile",
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": prompt}
@@ -40,7 +41,8 @@ class LLMMandateParser:
 
         try:
             with httpx.Client() as client:
-                resp = client.post(f"{base_url}/chat/completions", headers=headers, json=body, timeout=10.0)
+                endpoint = f"{base_url}/chat/completions"
+                resp = client.post(endpoint, headers=headers, json=body, timeout=10.0)
                 if resp.status_code == 200:
                     content = resp.json()["choices"][0]["message"]["content"]
                     parsed = json.loads(content)

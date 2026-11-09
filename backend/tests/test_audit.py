@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from app.models import Mandate
+from app.models import Mandate, Event
 from app.services.audit_service import AuditService
 
 def create_test_mandate(db, mandate_id: str) -> Mandate:
@@ -11,7 +11,8 @@ def create_test_mandate(db, mandate_id: str) -> Mandate:
             "approval_threshold": 100.0,
             "expiry": datetime.now(timezone.utc).isoformat(),
             "allowed_categories": ["electronics"],
-            "merchant_constraints": {"allow": ["Amazon"], "deny": []}
+            "merchant_constraints": {"allow": ["Amazon"], "deny": []},
+            "allowed_shipping_destinations": []
         },
         signature=None,
         is_revoked=False
@@ -21,6 +22,9 @@ def create_test_mandate(db, mandate_id: str) -> Mandate:
     return mandate
 
 def test_audit_event_hash_chaining(db):
+    db.query(Event).delete()
+    db.commit()
+
     create_test_mandate(db, "m_100")
     
     e1 = AuditService.record_event(
@@ -44,6 +48,9 @@ def test_audit_event_hash_chaining(db):
     assert count >= 2
 
 def test_audit_tamper_detection(db):
+    db.query(Event).delete()
+    db.commit()
+
     create_test_mandate(db, "m_200")
     
     e1 = AuditService.record_event(

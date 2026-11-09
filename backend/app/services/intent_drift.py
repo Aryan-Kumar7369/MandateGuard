@@ -14,7 +14,8 @@ class IntentDriftDetector:
     @staticmethod
     def analyze_drift(original_prompt: str, cart_description: str, item_amount: float) -> DriftAnalysisResult:
         api_key = os.getenv("GROQ_API_KEY")
-        base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+        base_url = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+        model = os.getenv("GROQ_DRIFT_MODEL", "llama-3.1-8b-instant")
 
         if not api_key:
             return DriftAnalysisResult(
@@ -37,7 +38,7 @@ class IntentDriftDetector:
 
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         body = {
-            "model": "llama-3.1-8b-instant",
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content}
@@ -47,7 +48,8 @@ class IntentDriftDetector:
 
         try:
             with httpx.Client() as client:
-                res = client.post(f"{base_url}/chat/completions", headers=headers, json=body, timeout=5.0)
+                endpoint = f"{base_url}/chat/completions"
+                res = client.post(endpoint, headers=headers, json=body, timeout=5.0)
                 if res.status_code == 200:
                     data = json.loads(res.json()["choices"][0]["message"]["content"])
                     action = PreFlightDecision.ASK_HUMAN if data.get("drift_detected") else PreFlightDecision.ALLOW

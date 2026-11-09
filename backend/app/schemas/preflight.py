@@ -8,6 +8,7 @@ class PreFlightRequest(BaseModel):
     amount: Decimal = Field(..., gt=0)
     category: str
     merchant: str
+    shipping_destination: str | None = None
 
 class PreFlightResponse(BaseModel):
     decision: PreFlightDecision

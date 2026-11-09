@@ -1,5 +1,7 @@
 from datetime import timezone
 from decimal import Decimal
+from sqlalchemy.orm import Session
+from app.models import Mandate, Delegation
 from app.schemas.mandate import MandateSchema
 
 class DelegationService:
@@ -32,3 +34,39 @@ class DelegationService:
             return False, "Child allow list includes merchants not allowed by parent."
 
         return True, "Delegation authorization narrowing validated successfully."
+
+    @classmethod
+    def validate_full_chain(cls, db: Session, target_mandate_id: str) -> tuple[bool, str, str | None]:
+        current_id = target_mandate_id
+        visited = set()
+
+        while True:
+            if current_id in visited:
+                return False, f"Cyclic delegation loop detected at mandate '{current_id}'.", current_id
+            visited.add(current_id)
+
+            mandate = db.query(Mandate).filter(Mandate.id == current_id).first()
+            if not mandate:
+                return False, f"Broken link: Mandate '{current_id}' does not exist.", current_id
+
+            if mandate.is_revoked:
+                return False, f"Broken link: Mandate '{current_id}' is revoked.", current_id
+
+            delegation = db.query(Delegation).filter(Delegation.child_mandate_id == current_id).first()
+            if not delegation:
+                break
+
+            parent_mandate = db.query(Mandate).filter(Mandate.id == delegation.parent_mandate_id).first()
+            if not parent_mandate:
+                return False, f"Broken link: Parent mandate '{delegation.parent_mandate_id}' missing.", delegation.parent_mandate_id
+
+            parent_rules = MandateSchema(**parent_mandate.rules)
+            child_rules = MandateSchema(**mandate.rules)
+            is_valid, reason = cls.validate_sub_mandate(parent_rules, child_rules)
+
+            if not is_valid:
+                return False, f"Broken link between parent '{parent_mandate.id}' and child '{mandate.id}': {reason}", mandate.id
+
+            current_id = parent_mandate.id
+
+        return True, "Full delegation chain verified successfully.", None

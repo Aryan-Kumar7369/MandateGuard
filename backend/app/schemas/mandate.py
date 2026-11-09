@@ -1,20 +1,17 @@
-from enum import Enum
-from pydantic import BaseModel
-from typing import List
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
+from pydantic import BaseModel, Field
 
-
-class PreFlightDecision(Enum):
+class PreFlightDecision(str, Enum):
     ALLOW = "ALLOW"
     BLOCK = "BLOCK"
     ASK_HUMAN = "ASK_HUMAN"
 
-
-
 class MandateSchema(BaseModel):
-    cumulative_budget: Decimal
-    approval_threshold: Decimal
+    cumulative_budget: Decimal = Field(..., gt=0)
+    approval_threshold: Decimal = Field(..., gt=0)
     expiry: datetime
-    allowed_categories: List[str]
-    merchant_constraints: dict[str, List[str]]
+    allowed_categories: list[str]
+    merchant_constraints: dict[str, list[str]]
+    allowed_shipping_destinations: list[str] = Field(default_factory=list)

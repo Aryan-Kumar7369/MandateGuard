@@ -136,6 +136,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "asyncpg" },
+    { name = "cryptography" },
     { name = "fastapi" },
     { name = "jwcrypto" },
     { name = "psycopg2-binary" },
@@ -160,6 +161,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.32.0" },
+    { name = "cryptography", specifier = ">=50.0.2" },
     { name = "fastapi", specifier = ">=0.162.0" },
     { name = "jwcrypto", specifier = ">=1.6.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.13" },

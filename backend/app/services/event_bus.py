@@ -24,6 +24,7 @@ class EventBus:
 
     @classmethod
     async def event_generator(cls, queue: asyncio.Queue) -> AsyncGenerator[str, None]:
+        yield ": connected\n\n"
         try:
             while True:
                 msg = await queue.get()

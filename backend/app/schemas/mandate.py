@@ -15,3 +15,15 @@ class MandateSchema(BaseModel):
     allowed_categories: list[str]
     merchant_constraints: dict[str, list[str]]
     allowed_shipping_destinations: list[str] = Field(default_factory=list)
+
+class MandateCreateRequest(BaseModel):
+    user_id: str
+    rules: MandateSchema
+
+class MandateResponse(BaseModel):
+    id: str
+    user_id: str
+    rules: MandateSchema
+    signature: str | None = None
+    is_revoked: bool
+    created_at: datetime

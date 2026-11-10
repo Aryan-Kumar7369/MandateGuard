@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI
-from app.routers import preflight, mandate, delegation, audit, checkout, dispute, merchant
+from app.routers import preflight, mandate, delegation, audit, checkout, dispute, merchant, events
 
 app = FastAPI(title="MandateGuard API", version="1.0.0")
 
@@ -13,6 +13,7 @@ app.include_router(audit.router)
 app.include_router(checkout.router)
 app.include_router(dispute.router)
 app.include_router(merchant.router)
+app.include_router(events.router)
 
 @app.get("/health")
 def health_check():

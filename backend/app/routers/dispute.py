@@ -1,65 +1,116 @@
-from fastapi import APIRouter, Depends
+from decimal import Decimal
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
 from app.core.database import get_db
-from app.models import Order
-from app.schemas.dispute import DisputeSyncResponse, DisputeSummary
-from app.services.paypal_service import PayPalService
+from app.models import Dispute, Order, Mandate
 from app.services.audit_service import AuditService
+from app.services.event_bus import EventBus
 
 router = APIRouter(prefix="/api/v1/disputes", tags=["Disputes"])
 
-@router.post("/sync", response_model=DisputeSyncResponse)
-def sync_disputes(db: Session = Depends(get_db)):
-    disputes_data = PayPalService.list_disputes()
-    items = disputes_data.get("items", [])
-    
-    synced_disputes: list[DisputeSummary] = []
+class DisputeWebhookPayload(BaseModel):
+    event_type: str
+    resource: dict
 
-    for item in items:
-        dispute_id = item.get("dispute_id", "")
-        status = item.get("status", "UNKNOWN")
-        reason = item.get("reason", "UNSPECIFIED")
-        
-        amount_dict = item.get("dispute_amount", {})
-        amount = float(amount_dict.get("value", 0.0))
-        currency = amount_dict.get("currency_code", "USD")
+@router.post("/webhook", status_code=200)
+async def paypal_dispute_webhook(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Handles live PayPal Sandbox Dispute webhooks.
+    Listens for PAYMENT.DISPUTE.CREATED and PAYMENT.DISPUTE.RESOLVED.
+    """
+    body = await request.json()
+    event_type = body.get("event_type")
+    resource = body.get("resource", {})
 
-        disputed_txs = item.get("disputed_transactions", [])
-        paypal_order_id = None
-        if disputed_txs:
-            paypal_order_id = disputed_txs[0].get("seller_transaction_id") or disputed_txs[0].get("custom_id")
+    dispute_id = resource.get("dispute_id") or resource.get("id", "DISPUTE_UNKNOWN")
+    disputed_tx = resource.get("disputed_transactions", [{}])[0]
+    paypal_order_id = disputed_tx.get("seller_transaction_id") or resource.get("seller_transaction_id")
+    amount_dict = resource.get("dispute_amount", {})
+    amount_val = Decimal(str(amount_dict.get("value", "0.00")))
+    reason = resource.get("reason", "UNAUTHORIZED_TRANSACTION")
 
-        if paypal_order_id:
-            order = db.query(Order).filter(Order.paypal_order_id == paypal_order_id).first()
-            if order:
-                order.status = f"DISPUTED_{status}"
-                db.commit()
+    order = db.query(Order).filter(Order.paypal_order_id == paypal_order_id).first() if paypal_order_id else None
+    mandate_id = order.mandate_id if order else "UNKNOWN_MANDATE"
 
-                AuditService.record_event(
-                    db=db,
-                    event_type="DISPUTE_FILED",
-                    mandate_id=order.mandate_id,
-                    payload={
-                        "dispute_id": dispute_id,
-                        "paypal_order_id": paypal_order_id,
-                        "status": status,
-                        "reason": reason,
-                        "amount": amount
-                    }
-                )
+    existing_dispute = db.query(Dispute).filter(Dispute.id == dispute_id).first()
 
-        synced_disputes.append(
-            DisputeSummary(
-                dispute_id=dispute_id,
-                status=status,
+    if event_type in ["PAYMENT.DISPUTE.CREATED", "SIMULATED.DISPUTE.CREATED"]:
+        if not existing_dispute:
+            new_dispute = Dispute(
+                id=dispute_id,
+                order_id=order.id if order else dispute_id,
+                mandate_id=mandate_id,
+                amount=amount_val,
                 reason=reason,
-                amount=amount,
-                currency=currency,
-                paypal_order_id=paypal_order_id
+                status="OPEN"
             )
+            db.add(new_dispute)
+            db.commit()
+
+        AuditService.record_event(
+            db=db,
+            event_type="DISPUTE_CREATED",
+            mandate_id=mandate_id,
+            payload={"dispute_id": dispute_id, "amount": float(amount_val), "reason": reason}
         )
 
-    return DisputeSyncResponse(
-        synced_count=len(synced_disputes),
-        disputes=synced_disputes
-    )
+        await EventBus.publish("DISPUTE_CREATED", {
+            "dispute_id": dispute_id,
+            "mandate_id": mandate_id,
+            "amount": float(amount_val),
+            "reason": reason,
+            "status": "OPEN"
+        })
+
+    elif event_type in ["PAYMENT.DISPUTE.RESOLVED", "SIMULATED.DISPUTE.RESOLVED"]:
+        if existing_dispute:
+            existing_dispute.status = "RESOLVED"
+            db.commit()
+
+        AuditService.record_event(
+            db=db,
+            event_type="DISPUTE_RESOLVED",
+            mandate_id=mandate_id,
+            payload={"dispute_id": dispute_id, "status": "RESOLVED"}
+        )
+
+        await EventBus.publish("DISPUTE_RESOLVED", {
+            "dispute_id": dispute_id,
+            "mandate_id": mandate_id,
+            "status": "RESOLVED"
+        })
+
+    return {"status": "processed", "event_type": event_type, "dispute_id": dispute_id}
+
+
+@router.post("/simulate-event", status_code=201)
+async def simulate_dispute_event(
+    paypal_order_id: str,
+    reason: str = "UNAUTHORIZED_INTENT_DRIFT",
+    amount: float = 50.00,
+    db: Session = Depends(get_db)
+):
+    """
+    Simulates a PayPal Dispute event locally without needing external webhook tunneling.
+    """
+    simulated_payload = {
+        "event_type": "SIMULATED.DISPUTE.CREATED",
+        "resource": {
+            "id": f"DISPUTE_SIM_{int(Decimal(amount))}",
+            "disputed_transactions": [{"seller_transaction_id": paypal_order_id}],
+            "dispute_amount": {"value": str(amount), "currency_code": "USD"},
+            "reason": reason
+        }
+    }
+
+    req_mock = Request(scope={"type": "http"})
+    async def json_body():
+        return simulated_payload
+    req_mock.json = json_body
+
+    return await paypal_dispute_webhook(request=req_mock, db=db)

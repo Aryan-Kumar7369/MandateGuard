@@ -1,1 +1,1 @@
-from app.models.model import Base, Mandate, Delegation, Order, Event
+from app.models.model import Base, Mandate, Delegation, Order, Event, Dispute

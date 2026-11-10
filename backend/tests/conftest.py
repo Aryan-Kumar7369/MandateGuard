@@ -3,7 +3,11 @@ from typing import Generator
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, engine, get_db
+from app.models import Base
 from app.main import app
+
+
+Base.metadata.create_all(bind=engine)
 
 @pytest.fixture(scope="function")
 def db() -> Generator[Session, None, None]:

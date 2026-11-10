@@ -1,16 +1,15 @@
 import uuid
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models import Mandate
-from app.schemas.mandate import MandateCreateRequest, MandateResponse
+from app.schemas.mandate import MandateCreateRequest, MandateResponse, MandateSchema
 from app.services.crypto import CryptoService
 from app.services.audit_service import AuditService
 from app.services.event_bus import EventBus
 from app.services.llm_mandate_parser import LLMMandateParser
-from pydantic import BaseModel
-from app.schemas.mandate import MandateSchema
 
 router = APIRouter(prefix="/api/v1/mandates", tags=["Mandates"])
 
@@ -75,6 +74,23 @@ async def create_mandate(
         signature=db_mandate.signature,
         is_revoked=db_mandate.is_revoked,
         created_at=db_mandate.created_at
+    )
+
+@router.get("/{mandate_id}", response_model=MandateResponse)
+def get_mandate(mandate_id: str, db: Session = Depends(get_db)):
+    mandate = db.query(Mandate).filter(Mandate.id == mandate_id).first()
+    if not mandate:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Mandate '{mandate_id}' not found."
+        )
+    return MandateResponse(
+        id=mandate.id,
+        user_id=mandate.user_id,
+        rules=MandateSchema(**mandate.rules),
+        signature=mandate.signature,
+        is_revoked=mandate.is_revoked,
+        created_at=mandate.created_at
     )
 
 @router.post("/{mandate_id}/revoke", response_model=MandateResponse)

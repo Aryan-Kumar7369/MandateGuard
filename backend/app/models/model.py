@@ -53,3 +53,15 @@ class Order(Base):
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     status: Mapped[str] = mapped_column(String(32))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class Dispute(Base):
+    __tablename__ = "disputes"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    order_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    mandate_id: Mapped[str] = mapped_column(String(36), ForeignKey("mandates.id"))
+    amount: Mapped[float] = mapped_column(Float)
+    reason: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(32), default="OPEN")
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

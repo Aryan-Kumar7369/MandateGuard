@@ -1,4 +1,5 @@
 import uuid
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -8,6 +9,18 @@ from app.schemas.delegation import DelegationCreateRequest, DelegationResponse
 from app.services.delegation_service import DelegationService
 
 router = APIRouter(prefix="/api/v1/delegations", tags=["Delegations"])
+
+
+class DelegationNodeResponse(BaseModel):
+    mandate_id: str
+    user_id: str
+    is_revoked: bool
+    cumulative_budget: float
+    allowed_categories: list[str]
+    parent_mandate_id: str | None = None
+    delegated_to: str | None = None
+    children: list["DelegationNodeResponse"] = []
+
 
 @router.post("/", response_model=DelegationResponse, status_code=status.HTTP_201_CREATED)
 def create_delegation(request: DelegationCreateRequest, db: Session = Depends(get_db)):
@@ -48,3 +61,31 @@ def create_delegation(request: DelegationCreateRequest, db: Session = Depends(ge
     db.refresh(delegation)
 
     return delegation
+
+
+@router.get("/tree/{mandate_id}", response_model=DelegationNodeResponse)
+def get_delegation_tree(mandate_id: str, db: Session = Depends(get_db)):
+    def build_node(current_id: str, parent_id: str | None = None) -> DelegationNodeResponse:
+        m = db.query(Mandate).filter(Mandate.id == current_id).first()
+        if not m:
+            raise HTTPException(status_code=404, detail=f"Mandate '{current_id}' not found.")
+
+        rules = MandateSchema(**m.rules)
+        child_delegations = db.query(Delegation).filter(Delegation.parent_mandate_id == current_id).all()
+
+        child_nodes = [
+            build_node(d.child_mandate_id, parent_id=current_id)
+            for d in child_delegations
+        ]
+
+        return DelegationNodeResponse(
+            mandate_id=m.id,
+            user_id=m.user_id,
+            is_revoked=m.is_revoked,
+            cumulative_budget=float(rules.cumulative_budget),
+            allowed_categories=rules.allowed_categories,
+            parent_mandate_id=parent_id,
+            children=child_nodes
+        )
+
+    return build_node(mandate_id)

@@ -1,10 +1,12 @@
 import uuid
+from decimal import Decimal
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import Mandate
+from app.models import Mandate, Order
 from app.schemas.mandate import MandateCreateRequest, MandateResponse, MandateSchema
 from app.services.crypto import CryptoService
 from app.services.audit_service import AuditService
@@ -19,6 +21,14 @@ class LLMParseRequest(BaseModel):
 class LLMParseResponse(BaseModel):
     proposed_rules: MandateSchema
     requires_human_confirmation: bool = True
+
+class BudgetSummaryResponse(BaseModel):
+    mandate_id: str
+    cumulative_budget: float
+    spent_amount: float
+    remaining_budget: float
+    usage_percentage: float
+    is_revoked: bool
 
 @router.post("/parse-prompt", response_model=LLMParseResponse)
 def parse_mandate_prompt(request: LLMParseRequest):
@@ -91,6 +101,36 @@ def get_mandate(mandate_id: str, db: Session = Depends(get_db)):
         signature=mandate.signature,
         is_revoked=mandate.is_revoked,
         created_at=mandate.created_at
+    )
+
+@router.get("/{mandate_id}/budget", response_model=BudgetSummaryResponse)
+def get_mandate_budget(mandate_id: str, db: Session = Depends(get_db)):
+    mandate = db.query(Mandate).filter(Mandate.id == mandate_id).first()
+    if not mandate:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Mandate '{mandate_id}' not found."
+        )
+
+    rules = MandateSchema(**mandate.rules)
+    cumulative = float(rules.cumulative_budget)
+
+    spent_result = (
+        db.query(func.coalesce(func.sum(Order.amount), 0.0))
+        .filter(Order.mandate_id == mandate_id, Order.status == "CAPTURED")
+        .scalar()
+    )
+    spent = float(spent_result)
+    remaining = max(0.0, cumulative - spent)
+    pct = round((spent / cumulative) * 100, 1) if cumulative > 0 else 0.0
+
+    return BudgetSummaryResponse(
+        mandate_id=mandate.id,
+        cumulative_budget=cumulative,
+        spent_amount=spent,
+        remaining_budget=remaining,
+        usage_percentage=min(100.0, pct),
+        is_revoked=mandate.is_revoked
     )
 
 @router.post("/{mandate_id}/revoke", response_model=MandateResponse)

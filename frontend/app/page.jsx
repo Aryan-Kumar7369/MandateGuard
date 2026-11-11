@@ -5,6 +5,8 @@ import { revokeMandate, verifyAuditChain } from '../lib/api';
 import MandateReviewCard from '../components/MandateReviewCard';
 import PasskeySigner from '../components/PasskeySigner';
 import MerchantVerifyBadge from '../components/MerchantVerifyBadge';
+import BudgetGauge from '../components/BudgetGauge';
+import DelegationChainTree from '../components/DelegationChainTree';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -85,11 +87,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans space-y-6">
-      {/* Header */}
       <header className="flex justify-between items-center border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-indigo-400">MandateGuard Control Center</h1>
-          <p className="text-sm text-slate-400">Live Intent Security, Biometric Governance & Merchant Verification Dashboard</p>
+          <p className="text-sm text-slate-400">Live Intent Security, Biometric Governance & Chain Intelligence Dashboard</p>
         </div>
         <div className="flex items-center space-x-4">
           <button
@@ -102,7 +103,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Audit Status Alert */}
       {auditStatus && (
         <div className={`p-4 rounded border ${auditStatus.is_valid ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200' : 'bg-rose-950/50 border-rose-500 text-rose-200'}`}>
           <div className="flex items-center justify-between">
@@ -113,16 +113,18 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Section 1: Mandate Authoring, Biometrics & Merchant Verification */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <MandateReviewCard apiBase={API_BASE} />
         <PasskeySigner apiBase={API_BASE} onSigned={(token) => setActiveMandateToken(token)} />
         <MerchantVerifyBadge apiBase={API_BASE} />
       </section>
 
-      {/* Section 2: Active Controls & Live SSE Stream */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <BudgetGauge apiBase={API_BASE} />
+        <DelegationChainTree apiBase={API_BASE} />
+      </section>
+
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Kill Switch & Active Control */}
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
           <h2 className="text-lg font-semibold border-b border-slate-800 pb-2 mb-4 text-rose-400">Emergency Kill-Switch</h2>
           <div className="space-y-4">
@@ -151,7 +153,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Real-Time Event Stream */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-lg p-5">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-4">
             <h2 className="text-lg font-semibold text-indigo-300">Live Agent Activity Feed</h2>

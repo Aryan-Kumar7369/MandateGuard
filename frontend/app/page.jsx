@@ -2,15 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { revokeMandate, verifyAuditChain } from '../lib/api';
+import MandateReviewCard from '../components/MandateReviewCard';
+import PasskeySigner from '../components/PasskeySigner';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [mandates, setMandates] = useState({});
   const [auditStatus, setAuditStatus] = useState(null);
   const [verifyingAudit, setVerifyingAudit] = useState(false);
+  const [activeMandateToken, setActiveMandateToken] = useState(null);
 
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:8000/api/v1/events/stream');
+    const eventSource = new EventSource(`${API_BASE}/events/stream`);
 
     const handleEvent = (type, data) => {
       const newEvt = {
@@ -78,25 +83,27 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans">
-      <header className="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans space-y-6">
+      {/* Dashboard Header */}
+      <header className="flex justify-between items-center border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-indigo-400">MandateGuard Control Center</h1>
-          <p className="text-sm text-slate-400">Live Intent Security & Kill-Switch Dashboard</p>
+          <p className="text-sm text-slate-400">Live Intent Security, Biometric Governance & Kill-Switch Dashboard</p>
         </div>
         <div className="flex items-center space-x-4">
           <button
             onClick={handleVerifyIntegrity}
             disabled={verifyingAudit}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-semibold transition disabled:opacity-50"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-semibold transition disabled:opacity-50 shadow-lg"
           >
             {verifyingAudit ? 'Verifying...' : 'Verify Audit Hash-Chain'}
           </button>
         </div>
       </header>
 
+      {/* Audit Status Alert */}
       {auditStatus && (
-        <div className={`p-4 mb-6 rounded border ${auditStatus.is_valid ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200' : 'bg-rose-950/50 border-rose-500 text-rose-200'}`}>
+        <div className={`p-4 rounded border ${auditStatus.is_valid ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200' : 'bg-rose-950/50 border-rose-500 text-rose-200'}`}>
           <div className="flex items-center justify-between">
             <span className="font-semibold">{auditStatus.is_valid ? '✔ AUDIT CHAIN INTEGRITY VALID' : '✖ TAMPER DETECTED IN AUDIT LOG'}</span>
             <span className="text-xs">Verified Events: {auditStatus.total_events}</span>
@@ -105,7 +112,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Section 1: Mandate Authoring & Biometric Signing */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MandateReviewCard apiBase={API_BASE} />
+        <PasskeySigner apiBase={API_BASE} onSigned={(token) => setActiveMandateToken(token)} />
+      </section>
+
+      {/* Section 2: Active Controls & Live SSE Stream */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Kill Switch & Active Control */}
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
           <h2 className="text-lg font-semibold border-b border-slate-800 pb-2 mb-4 text-rose-400">Emergency Kill-Switch</h2>
@@ -171,12 +185,17 @@ export default function Dashboard() {
                       MANDATE REVOKED: {evt.data.mandate_id}
                     </div>
                   )}
+                  {evt.type === 'MANDATE_CREATED' && (
+                    <div className="text-emerald-400 font-semibold">
+                      NEW MANDATE REGISTERED: {evt.data.mandate_id}
+                    </div>
+                  )}
                 </div>
               ))
             )}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

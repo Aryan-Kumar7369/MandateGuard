@@ -3,7 +3,7 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import preflight, mandate, delegation, audit, checkout, dispute, merchant, events
+from app.routers import preflight, mandate, delegation, audit, checkout, dispute, merchant, events, webauthn
 
 app = FastAPI(title="MandateGuard API", version="1.0.0")
 
@@ -23,6 +23,7 @@ app.include_router(checkout.router)
 app.include_router(dispute.router)
 app.include_router(merchant.router)
 app.include_router(events.router)
+app.include_router(webauthn.router)
 
 @app.get("/health")
 def health_check():

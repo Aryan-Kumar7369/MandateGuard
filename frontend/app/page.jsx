@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { revokeMandate, verifyAuditChain } from '../lib/api';
 import MandateReviewCard from '../components/MandateReviewCard';
 import PasskeySigner from '../components/PasskeySigner';
+import MerchantVerifyBadge from '../components/MerchantVerifyBadge';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -84,11 +85,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans space-y-6">
-      {/* Dashboard Header */}
+      {/* Header */}
       <header className="flex justify-between items-center border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-indigo-400">MandateGuard Control Center</h1>
-          <p className="text-sm text-slate-400">Live Intent Security, Biometric Governance & Kill-Switch Dashboard</p>
+          <p className="text-sm text-slate-400">Live Intent Security, Biometric Governance & Merchant Verification Dashboard</p>
         </div>
         <div className="flex items-center space-x-4">
           <button
@@ -112,10 +113,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Section 1: Mandate Authoring & Biometric Signing */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Section 1: Mandate Authoring, Biometrics & Merchant Verification */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <MandateReviewCard apiBase={API_BASE} />
         <PasskeySigner apiBase={API_BASE} onSigned={(token) => setActiveMandateToken(token)} />
+        <MerchantVerifyBadge apiBase={API_BASE} />
       </section>
 
       {/* Section 2: Active Controls & Live SSE Stream */}

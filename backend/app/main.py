@@ -7,15 +7,22 @@ if root_env.exists():
     load_dotenv(root_env)
 load_dotenv()
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.models.model import Base
 from app.core.database import engine
 from app.routers import preflight, mandate, delegation, audit, checkout, dispute, merchant, events, webauthn, red_team, demo
 
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
+    yield
 
-app = FastAPI(title="MandateGuard API", version="1.0.0")
+app = FastAPI(title="MandateGuard API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

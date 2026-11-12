@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, RefreshCw, Radio } from 'lucide-react';
+import { RefreshCw, Radio } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onVerifyAudit, isVerifying, auditStatus }) {
   const tabs = [
@@ -16,15 +16,12 @@ export default function Navbar({ activeTab, setActiveTab, onVerifyAudit, isVerif
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#003087] to-[#0070ba] flex items-center justify-center shadow-inner">
-              <ShieldCheck className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#003087] to-[#0070ba] flex items-center justify-center shadow-inner overflow-hidden p-1.5">
+              <img src="/favicon.ico" alt="MandateGuard" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-extrabold text-lg tracking-tight text-white">MandateGuard</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider bg-[#0070ba] text-white px-2 py-0.5 rounded-full">
-                  PayPal Agentic Rail
-                </span>
               </div>
               <p className="text-xs text-slate-300 hidden sm:block">
                 Cryptographic Pre-Flight Authorization for Autonomous Agents

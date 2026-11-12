@@ -94,9 +94,6 @@ export default function PasskeySigner({ apiBase = 'http://localhost:8000/api/v1'
             <p className="text-xs text-slate-500">Non-repudiable FIDO2 hardware enclave authentication</p>
           </div>
         </div>
-        <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-100">
-          Component 1
-        </span>
       </div>
 
       <p className="text-xs text-slate-600 leading-relaxed mb-4">

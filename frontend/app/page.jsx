@@ -12,7 +12,7 @@ import RedTeamDashboard from '../components/RedTeamDashboard';
 import DisputeCenter from '../components/DisputeCenter';
 import LiveActivityFeed from '../components/LiveActivityFeed';
 import { revokeMandate, verifyAuditChain } from '../lib/api';
-import { ShieldCheck, ShieldAlert, CheckCircle2, Lock, ArrowUpRight } from 'lucide-react';
+import { ShieldAlert, CheckCircle2, Lock, ArrowUpRight } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
 
@@ -242,15 +242,12 @@ export default function Dashboard() {
       <footer className="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded bg-[#0070ba] flex items-center justify-center text-white">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <div className="w-5 h-5 rounded bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden p-0.5">
+              <img src="/favicon.ico" alt="MandateGuard" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-slate-700">MandateGuard</span>
             <span>- Provable Permission for AI Agents That Spend</span>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono">
-            PayPal Orders v2 Sandbox &bull; FIDO2 Passkeys &bull; Ed25519 &bull; SHA-256
-          </span>
         </div>
       </footer>
     </div>

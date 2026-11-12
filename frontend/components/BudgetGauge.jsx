@@ -35,9 +35,6 @@ export default function BudgetGauge({ defaultMandateId = 'm_corp_root' }) {
             <p className="text-xs text-slate-500">Real-time spending exhaustion and velocity monitor</p>
           </div>
         </div>
-        <span className="text-[11px] font-semibold bg-blue-50 text-[#0070ba] px-2.5 py-1 rounded-full border border-blue-100">
-          Component 6
-        </span>
       </div>
 
       <div className="flex space-x-2 mb-4">

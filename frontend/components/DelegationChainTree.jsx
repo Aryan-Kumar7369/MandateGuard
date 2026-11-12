@@ -83,9 +83,6 @@ export default function DelegationChainTree({ defaultRootId = 'm_corp_root' }) {
             <p className="text-xs text-slate-500">Multi-agent authority delegation with mathematical narrowing bounds</p>
           </div>
         </div>
-        <span className="text-[11px] font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-100">
-          Component 4
-        </span>
       </div>
 
       <div className="flex space-x-2 mb-4">

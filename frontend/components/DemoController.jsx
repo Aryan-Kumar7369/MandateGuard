@@ -101,8 +101,7 @@ export default function DemoController({ onEventTriggered }) {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#0070ba] animate-ping" />
-            <h3 className="font-bold text-sm text-[#001c3f]">Hackathon Presentation Walkthrough Controls</h3>
+            <h3 className="font-bold text-sm text-[#001c3f]">Demo Controls</h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Execute the three-act agentic security narrative in real time

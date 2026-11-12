@@ -63,9 +63,6 @@ export default function MandateReviewCard({ onMandateCreated }) {
             <p className="text-xs text-slate-500">Translate spending intentions into cryptographically verifiable schemas</p>
           </div>
         </div>
-        <span className="text-[11px] font-semibold bg-blue-50 text-[#0070ba] px-2.5 py-1 rounded-full border border-blue-100">
-          Component 1
-        </span>
       </div>
 
       <div className="space-y-3">

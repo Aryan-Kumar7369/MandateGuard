@@ -46,9 +46,6 @@ export default function MerchantVerifyBadge({ defaultMandateId = 'm_corp_devops'
             <p className="text-xs text-slate-500">Privacy-preserving pre-checkout verification badge</p>
           </div>
         </div>
-        <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-100">
-          Component 8
-        </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">

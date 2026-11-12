@@ -2,7 +2,7 @@
 
 ### Autonomous Agent Pre-Flight Authorization Gateway for PayPal Commerce
 
-**Live Demo URL:** [https://mandateguard.example.com](https://mandateguard.example.com) *(Insert live production link here)*
+**Live Demo URL:** [https://mandate-guard-rho.vercel.app/](https://mandate-guard-rho.vercel.app/) 
 
 ---
 

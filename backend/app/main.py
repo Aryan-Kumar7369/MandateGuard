@@ -9,7 +9,11 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.models.model import Base
+from app.core.database import engine
 from app.routers import preflight, mandate, delegation, audit, checkout, dispute, merchant, events, webauthn, red_team, demo
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="MandateGuard API", version="1.0.0")
 

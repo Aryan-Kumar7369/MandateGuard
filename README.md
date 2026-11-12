@@ -161,13 +161,15 @@ MandateGuard directly integrates with the PayPal REST API and PayPal Sandbox to 
 MandateGuard uses high-speed Large Language Model inference powered by **Groq** to bridge human intent with deterministic cryptographic policies and protect against semantic drift.
 
 ### 1. Natural Language Mandate Parser (`LLMMandateParser`)
-- **Model:** `llama-3.3-70b-versatile` (or specified high-parameter reasoning models via Groq).
+- **Code Service:** Located at `backend/app/services/llm_mandate_parser.py`
+- **Configured Model:** `GROQ_MODEL` environment variable (`openai/gpt-oss-120b` model).
 - **Function:** Translates conversational English user prompts into strictly validated JSON schemas (`MandateSchema`).
 - **Structured Extraction:** Extracts numerical spend limits, single-order caps, expiration timestamps, merchant allow/deny lists, and allowed categories with strict JSON schema compliance.
-- **Fail-Safe Mechanism:** If the external LLM service is unavailable, MandateGuard falls back to a deterministic rule parser to ensure continuous availability.
+- **Fail-Safe Mechanism:** If the external LLM service is unreachable or unconfigured, MandateGuard automatically invokes `_fallback_parser` to ensure the system fails safe without crashing.
 
 ### 2. Autonomous Intent Drift Detector (`IntentDriftDetector`)
-- **Model:** `llama-3.1-8b-instant` (via Groq ultra-low-latency processing).
+- **Code Service:** Located at `backend/app/services/intent_drift.py`
+- **Configured Model:** `GROQ_DRIFT_MODEL` environment variable (`openai/gpt-oss-20b` model).
 - **Function:** Analyzes the semantic alignment between the human's original mandate instructions and the agent's real-time checkout cart items.
 - **Drift Identification:** Detects subtle semantic deviations such as hidden subscription upgrades, unapproved warranty bundles, vendor substitutions, or suspicious address changes before payment.
 - **Safety Invariant:** The drift detector can only escalate decisions to require human review (`ASK_HUMAN`). It can never override or bypass a deterministic policy `BLOCK`.
@@ -181,10 +183,10 @@ Postman is used throughout the lifecycle of MandateGuard for endpoint design, au
 ### How Postman is Used in MandateGuard
 1. **API Collection:** A Postman collection covers the complete MandateGuard API surface:
    - `/api/v1/mandates`: Mandate creation, listing, retrieval, and revocation.
-   - `/api/v1/preflight/evaluate`: Transaction evaluation against active policies.
+   - `/api/v1/preflight`: Transaction evaluation against active policies.
    - `/api/v1/checkout/create-order`: Interception and proxy to PayPal Sandbox Order Creation.
    - `/api/v1/checkout/execute`: Order capture and budget commitment.
-   - `/api/v1/dispute`: Dispute synchronization, evidence bundle compilation, and recourse preview.
+   - `/api/v1/disputes`: Dispute synchronization, evidence bundle compilation, and recourse preview.
    - `/api/v1/demo`: Coordinated 3-Act demonstration endpoints (`/seed`, `/act1`, `/act2`, `/act3`).
 2. **Environment Variables:** The Postman environment maintains dynamic tokens (`{{access_token}}`, `{{mandate_id}}`, `{{paypal_order_id}}`), allowing tests to chain output from pre-flight checks directly into PayPal checkout execution.
 3. **Automated Pre-Request Scripts:** Postman scripts generate canonical SHA-256 digests and mock cryptographic signatures to simulate WebAuthn/FIDO2 hardware passkeys during continuous integration runs.
@@ -241,7 +243,7 @@ Follow these steps to run MandateGuard locally on your workstation using Docker 
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/your-username/MandateGuard.git
+git clone https://github.com/Aryan-Kumar7369/MandateGuard.git
 cd MandateGuard
 ```
 
@@ -254,7 +256,7 @@ cp .env.example .env
 ```
 Open `.env` and fill in your credentials using your own values:
 - Set your desired PostgreSQL credentials (used by the Docker container).
-- Add your **PayPal Sandbox Client ID** and **Secret** from the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/applications/sandbox).
+- Add your **PayPal Sandbox Client ID** and **Secret** from the PayPal Developer Dashboard.
 - Add your **Groq API Key** for natural language mandate compilation and drift detection.
 
 ---
@@ -343,14 +345,14 @@ MandateGuard reads configuration variables from the root `.env` file. A sample t
 | `PAYPAL_API_BASE` | PayPal API base URL endpoint | `https://api-m.sandbox.paypal.com` |
 | `GROQ_API_KEY` | API Key for Groq LLM Compiler | `groq_api_key_placeholder` |
 | `GROQ_BASE_URL` | Base URL for LLM provider API | `https://api.groq.com/openai/v1` |
-| `GROQ_MODEL` | Primary LLM model for mandate compilation | `llama-3.3-70b-versatile` |
-| `GROQ_DRIFT_MODEL` | Fast LLM model for real-time drift detection | `llama-3.1-8b-instant` |
+| `GROQ_MODEL` | Primary LLM model for mandate compilation | `openai/gpt-oss-20b` |
+| `GROQ_DRIFT_MODEL` | Fast LLM model for real-time drift detection | `openai/gpt-oss-20b` |
 
 ---
 
-## Hackathon Evaluation Walkthrough
+## MandateGuard Walkthrough
 
-Follow this 5-step sequence during demonstration to inspect all capabilities:
+Follow this 5-step sequence to inspect all capabilities:
 
 ### Step 1: Initialize the Environment
 - Open `http://localhost:3000` in your browser.
@@ -406,7 +408,7 @@ All **42 unit, integration, and security tests** pass, validating:
 - **Database & Containerization:** PostgreSQL, SQLAlchemy, Docker Compose
 - **Cryptographic Engine:** Cryptography (Ed25519, SHA-256 canonical hashing), WebAuthn / FIDO2 specifications
 - **Payment & Settlement:** PayPal REST API (Orders v2, Disputes v1, Webhooks)
-- **Natural Language & Safety:** Groq API (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`)
+- **Natural Language & Safety:** Groq API (`openai/gpt-oss-20b`)
 - **Frontend Framework:** Next.js 16 (App Router), React, Tailwind CSS
 - **API Testing:** Postman Collections & Newman CI runner
 - **Cloud Deployment:** Render (Web Service + Managed PostgreSQL)

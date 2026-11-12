@@ -47,6 +47,7 @@ Below are interface captures demonstrating the real-time authorization gateway, 
 - [The MandateGuard Solution](#the-mandate-guard-solution)
 - [Key Features](#key-features)
 - [PayPal Integration Deep Dive](#paypal-integration-deep-dive)
+- [Groq LLM Models and AI Safety Integration](#groq-llm-models-and-ai-safety-integration)
 - [Postman Workspace and API Testing](#postman-workspace-and-api-testing)
 - [Cloud Deployment with Render](#cloud-deployment-with-render)
 - [Local Installation and Setup Guide](#local-installation-and-setup-guide)
@@ -59,20 +60,20 @@ Below are interface captures demonstrating the real-time authorization gateway, 
 
 ## Problem Statement
 
-Autonomous AI agents (such as procurement bots, DevOps self-healing agents, and personal shoppers) are increasingly trusted to perform actions across the internet. However, giving autonomous software direct financial agency creates severe financial and compliance risks:
+Autonomous AI agents (such as procurement bots, DevOps self-healing agents, and personal shopping assistants) are increasingly trusted to execute automated actions across web services. However, giving autonomous software financial authority creates severe operational and monetary risks:
 
-1. **Unbounded Agent Spend:** Traditional API keys and credit cards provide binary access (all-or-nothing). Once granted, an agent can drain an entire corporate balance or credit line if it enters an infinite loop, hallucinates, or gets prompt-injected.
-2. **Lack of Cryptographic Provenance:** When an agent executes an erroneous or malicious transaction, merchants and financial networks cannot distinguish between human-authorized intent, compromised credentials, or runaway autonomous processes.
-3. **Escalation via Uncontrolled Delegation:** Primary agents frequently delegate subtasks to specialized secondary agents (for example, a Project Manager bot delegating infrastructure purchases to a DevOps bot). Current payment mechanisms lack the ability to mathematically enforce child budget inheritance or permission narrowing.
-4. **Vulnerability in Disputes and Chargebacks:** In dispute scenarios, account owners have zero structured, tamper-proof audit trails linking the initial human policy to the specific downstream API call, resulting in lost funds and lengthy merchant disputes.
+1. **Unbounded Agent Spend:** Traditional API keys and payment cards offer all-or-nothing access. If an autonomous agent enters a recursive loop, hallucinates, or gets prompt-injected, it can rapidly deplete entire corporate accounts or credit limits.
+2. **Lack of Cryptographic Provenance:** When an agent executes an erroneous purchase, merchants and payment platforms cannot distinguish between legitimate human intent, hijacked credentials, or unintended autonomous drift.
+3. **Escalation via Uncontrolled Delegation:** Primary agents routinely delegate tasks to specialized sub-agents. Current payment systems cannot mathematically enforce parent-child budget inheritance or prevent child agents from exceeding the rights of their creator.
+4. **Dispute Vulnerabilities:** During merchant disputes or chargebacks, account holders lack tamper-proof audit trails linking the original human authorization directly to the specific downstream API call.
 
 ---
 
 ## The MandateGuard Solution
 
-MandateGuard operates as a **cryptographic, policy-enforcing pre-flight gateway** positioned directly between autonomous AI agents and PayPal commerce infrastructure. 
+MandateGuard operates as a **cryptographic, policy-enforcing pre-flight gateway** positioned between autonomous AI agents and PayPal commerce infrastructure. 
 
-Before an agent can make a purchase, MandateGuard intercepts the request and verifies it against mathematically signed human constraints called **Mandates**.
+Before an agent can complete any transaction, MandateGuard intercepts the request and verifies it against mathematically signed constraints established by human principals, termed **Mandates**.
 
 ```
 [ Human Principal ]
@@ -86,39 +87,39 @@ Before an agent can make a purchase, MandateGuard intercepts the request and ver
 ```
 
 ### How MandateGuard Operates
-1. **Pre-Flight Interception:** No transaction touches the PayPal network until MandateGuard evaluates spending limits, approved categories, merchant whitelists, geographic shipping bounds, and remaining cumulative budgets in under 10 milliseconds.
-2. **Cryptographic Proof of Intent:** Human principals sign mandates using FIDO2 WebAuthn or asymmetric Ed25519 keypairs. Every agent request must cryptographically bind to a verified root signature.
-3. **Inheritance & Delegation Restraints:** Sub-agents can only be provisioned with child mandates whose parameters are strict subsets of the parent mandate. A child agent can never possess higher spend limits or wider categories than its delegator.
-4. **Instant Kill-Switch:** Account owners can immediately revoke any node in the agent hierarchy with a single click, instantly cutting off all downstream automated transactions.
-5. **Automated PayPal Recourse:** If an agent operation is disputed, MandateGuard generates a one-click, cryptographically signed Evidence Bundle paired with PayPal Disputes API integration.
+1. **Pre-Flight Interception:** No checkout call reaches the PayPal network until MandateGuard evaluates spending thresholds, merchant whitelists, allowed categories, geographic destinations, and remaining balances in under 10 milliseconds.
+2. **Cryptographic Proof of Intent:** Principals authorize spending policies using asymmetric Ed25519 signatures or FIDO2 hardware passkeys. Every agent proposal must bind back to a verified root signature.
+3. **Strict Delegation Bounds:** Sub-agents can only be provisioned with child mandates whose permissions are subsets of the parent mandate. Child agents can never escalate budget or expand categories beyond their parent.
+4. **Zero-Latency Emergency Kill-Switch:** Account owners can instantly revoke any mandate in the hierarchy with a single click, immediately halting all downstream automated activity.
+5. **Automated PayPal Recourse:** In disputed transactions, MandateGuard compiles a cryptographically sealed Evidence Bundle and synchronizes with the PayPal Disputes API for rapid resolution.
 
 ---
 
 ## Key Features
 
 ### 1. Natural Language Mandate Compiler
-Principals can define spending policies in conversational English (e.g., *"Allow our DevOps bot to buy software tools on GitHub up to $150 total, max $50 per purchase, expiring in 7 days"*). The system compiles the natural language into an immutable, structured JSON schema with strict validation rules before human passkey signing.
+Principals describe spending rules in everyday English (for example: *"Allow our DevOps bot to buy software tools on GitHub up to $150 total, max $50 per purchase, expiring in 7 days"*). The compiler validates and translates this intent into a deterministic policy schema.
 
 ### 2. Cryptographic Passkey Signing
-Mandates are authenticated via WebAuthn/FIDO2 hardware passkeys or asymmetric keypairs. Signatures are verified against the SHA-256 digest of canonicalized mandate policies, preventing any unauthorized modification or database tampering.
+Mandates are authenticated using asymmetric signatures (Ed25519) and WebAuthn/FIDO2 hardware passkeys. Signatures are verified against the SHA-256 digest of canonicalized policy schemas, ensuring zero unauthorized modification.
 
 ### 3. Deterministic Pre-Flight Policy Engine
-Every transaction request is evaluated in-memory against deterministic policy constraints:
-- **Cumulative Lifetime Budget:** Total expenditure ceiling enforced across multiple agent orders.
-- **Single Transaction Cap:** Maximum allowable price per single checkout.
-- **Merchant Allow / Deny Lists:** Whitelisted vendor domains and explicit merchant blacklists.
-- **Category Restrictions:** Whitelisted MCCs or merchant classifications (e.g., software, cloud, electronics).
-- **Geographic Destination Fencing:** Verified country shipping boundaries.
+Every agent purchase is evaluated in-memory against deterministic rules:
+- **Cumulative Lifetime Budget:** Total spending ceiling across multiple agent transactions.
+- **Single-Transaction Cap:** Maximum allowable price per individual checkout.
+- **Merchant Whitelist & Blacklist:** Allowed vendor domains and denied entities.
+- **Category Restrictions:** Whitelisted merchant categories (such as software, cloud, electronics).
+- **Geographic Destination Fencing:** Verified country-level delivery boundaries.
 
 ### 4. Hierarchical Delegation Tree
-Root agents can dynamically spawn sub-agents for specialized assignments. The delegation engine mathematically verifies non-escalation invariants:
-- Child budget must not exceed parent remaining budget.
-- Child categories must be a strict subset of parent categories.
-- Child expiry must occur prior to or match parent expiry.
-- Revoking a parent node automatically cascades and revokes all descendants.
+Root agents can provision secondary agents for specialized assignments. The delegation engine mathematically enforces non-escalation invariants:
+- Child budget must not exceed the parent's remaining budget.
+- Child categories must be a subset of parent categories.
+- Child expiry must match or precede parent expiry.
+- Revoking a parent node automatically cascades to revoke all child nodes.
 
 ### 5. Merchant Privacy and Signal Badges
-Mandates expose a zero-knowledge attestation to merchants. Merchants can verify that an agent operates under a valid, funded corporate mandate without exposing the company's internal spend ceilings, rules, or identity.
+MandateGuard exposes an attestation badge for merchants. Vendors can verify that an agent operates under a valid, funded corporate mandate without exposing the organization's internal spending limits or business logic.
 
 ### 6. Automated Dispute Evidence Bundle
 When an unauthorized transaction occurs, MandateGuard compiles a cryptographic bundle containing the root mandate signature, delegation tree, policy audit logs, and PayPal order references. It formats the data into an automated defense submission for the PayPal Disputes API.
@@ -133,7 +134,7 @@ An integrated security scorecard executes 9 automated adversarial vectors (budge
 MandateGuard directly integrates with the PayPal REST API and PayPal Sandbox to bridge autonomous agency with real payment processing.
 
 ### 1. PayPal Orders API (`/v2/checkout/orders`)
-- **Order Initialization:** When an agent submits a valid purchase proposal that passes pre-flight checks, MandateGuard issues an authenticated request to `POST /v2/checkout/orders`.
+- **Order Initialization:** When an agent submits a purchase proposal that passes pre-flight checks, MandateGuard issues an authenticated request to `POST /v2/checkout/orders`.
 - **Payload Construction:** The request specifies `intent: "CAPTURE"`, purchase unit amounts, currency codes, and custom descriptions containing the originating Mandate ID for end-to-end reconciliation.
 - **HATEOAS Link Resolution:** MandateGuard parses PayPal's response to extract the buyer approval link (`rel: "approve"`).
 - **Execution & Capture:** Once the human principal or authorized buyer signs off in the sandbox flow, MandateGuard triggers `POST /v2/checkout/orders/{id}/capture`, converting the pre-authorized intent into completed settlement funds.
@@ -152,6 +153,24 @@ MandateGuard directly integrates with the PayPal REST API and PayPal Sandbox to 
   - `CHECKOUT.ORDER.COMPLETED`: Updates the internal ledger, decrements remaining cumulative budget, and publishes an audit event to the live dashboard.
   - `CUSTOMER.DISPUTE.CREATED`: Automatically pauses or freezes the associated agent mandate to prevent further losses while the investigation proceeds.
   - `CUSTOMER.DISPUTE.RESOLVED`: Releases freezes or triggers remediation based on resolution status.
+
+---
+
+## Groq LLM Models and AI Safety Integration
+
+MandateGuard uses high-speed Large Language Model inference powered by **Groq** to bridge human intent with deterministic cryptographic policies and protect against semantic drift.
+
+### 1. Natural Language Mandate Parser (`LLMMandateParser`)
+- **Model:** `llama-3.3-70b-versatile` (or specified high-parameter reasoning models via Groq).
+- **Function:** Translates conversational English user prompts into strictly validated JSON schemas (`MandateSchema`).
+- **Structured Extraction:** Extracts numerical spend limits, single-order caps, expiration timestamps, merchant allow/deny lists, and allowed categories with strict JSON schema compliance.
+- **Fail-Safe Mechanism:** If the external LLM service is unavailable, MandateGuard falls back to a deterministic rule parser to ensure continuous availability.
+
+### 2. Autonomous Intent Drift Detector (`IntentDriftDetector`)
+- **Model:** `llama-3.1-8b-instant` (via Groq ultra-low-latency processing).
+- **Function:** Analyzes the semantic alignment between the human's original mandate instructions and the agent's real-time checkout cart items.
+- **Drift Identification:** Detects subtle semantic deviations such as hidden subscription upgrades, unapproved warranty bundles, vendor substitutions, or suspicious address changes before payment.
+- **Safety Invariant:** The drift detector can only escalate decisions to require human review (`ASK_HUMAN`). It can never override or bypass a deterministic policy `BLOCK`.
 
 ---
 
@@ -188,22 +207,21 @@ The MandateGuard backend and database are designed for deployment on Render.
      ```bash
      pip install -r requirements.txt
      ```
-     *(or `pip install uv && uv sync`)*
    - **Start Command:**
      ```bash
      uvicorn app.main:app --host 0.0.0.0 --port $PORT
      ```
 3. **Environment Variables on Render:**
    Configure the following variables in the Render Dashboard under **Environment**:
-   - `POSTGRES_DB_USER`: Your Render PostgreSQL username.
-   - `POSTGRES_DB_PASSWORD`: Your Render PostgreSQL password.
-   - `POSTGRES_DB_NAME`: Your Render PostgreSQL database name.
-   - `POSTGRES_DB_HOST`: Your Render PostgreSQL host name.
+   - `POSTGRES_DB_USER`: Your Render database username.
+   - `POSTGRES_DB_PASSWORD`: Your Render database password.
+   - `POSTGRES_DB_NAME`: Your Render database name.
+   - `POSTGRES_DB_HOST`: Your Render database hostname.
    - `POSTGRES_DB_PORT`: `5432`
-   - `PAYPAL_CLIENT_ID`: PayPal Sandbox App Client ID.
-   - `PAYPAL_CLIENT_SECRET`: PayPal Sandbox App Secret.
+   - `PAYPAL_CLIENT_ID`: Your PayPal Sandbox Client ID.
+   - `PAYPAL_CLIENT_SECRET`: Your PayPal Sandbox Secret.
    - `PAYPAL_API_BASE`: `https://api-m.sandbox.paypal.com`
-   - `GROQ_API_KEY`: Groq Cloud API Key for mandate compilation.
+   - `GROQ_API_KEY`: Your Groq API Key.
 4. **Health Check Endpoint:**
    - Configure Render's Health Check Path to `/health`. The service returns `{"status": "healthy"}` upon successful initialization.
 
@@ -211,13 +229,13 @@ The MandateGuard backend and database are designed for deployment on Render.
 
 ## Local Installation and Setup Guide
 
-Follow these steps to run MandateGuard locally on your workstation.
+Follow these steps to run MandateGuard locally on your workstation using Docker for PostgreSQL.
 
 ### Prerequisites
 - **Git** installed
+- **Docker** and **Docker Compose** installed and running
 - **Python 3.11+** installed
 - **Node.js 18+** and **npm** installed
-- **PostgreSQL** installed and running locally, or **Docker**
 
 ---
 
@@ -234,21 +252,24 @@ Copy the template configuration file to `.env` in the project root:
 ```bash
 cp .env.example .env
 ```
-Open `.env` and provide your credentials:
-- Enter your local PostgreSQL credentials.
+Open `.env` and fill in your credentials using your own values:
+- Set your desired PostgreSQL credentials (used by the Docker container).
 - Add your **PayPal Sandbox Client ID** and **Secret** from the [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/applications/sandbox).
-- Add your **Groq API Key** for natural language mandate compilation.
+- Add your **Groq API Key** for natural language mandate compilation and drift detection.
 
 ---
 
-### Step 3: Set Up Database
-Ensure PostgreSQL is running and create the database:
-```sql
-CREATE DATABASE mandateguard;
-CREATE USER mandateguard WITH PASSWORD 'mandate_guard#7369';
-GRANT ALL PRIVILEGES ON DATABASE mandateguard TO mandateguard;
+### Step 3: Start PostgreSQL via Docker Compose
+MandateGuard includes a pre-configured `compose.yaml` file to run PostgreSQL in an isolated Docker container.
+
+Start the database container:
+```bash
+docker compose up -d
 ```
-*(Alternatively, use the included `compose.yaml` to spin up a PostgreSQL container using Docker: `docker compose up -d`)*
+To verify the database container is active:
+```bash
+docker compose ps
+```
 
 ---
 
@@ -261,10 +282,10 @@ cd backend
 
 Install dependencies using `uv` (recommended) or standard `pip`:
 ```bash
-# Using uv (fastest)
+# Using uv:
 uv sync
 
-# Or using standard pip
+# Or using standard pip:
 python -m venv .venv
 # On Windows:
 .venv\Scripts\activate
@@ -282,13 +303,13 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 The backend API will be available at: **`http://localhost:8000`**  
-Interactive Swagger docs: **`http://localhost:8000/docs`**
+Interactive Swagger documentation: **`http://localhost:8000/docs`**
 
 ---
 
 ### Step 5: Set Up and Run the Frontend
 
-Open a new terminal window, navigate to the `frontend` folder:
+Open a second terminal window, navigate to the `frontend` folder:
 ```bash
 cd frontend
 ```
@@ -308,27 +329,28 @@ The frontend user interface will be accessible at: **`http://localhost:3000`**
 
 ## Environment Configuration
 
-MandateGuard reads configuration parameters from the root `.env` file:
+MandateGuard reads configuration variables from the root `.env` file. A sample template is provided in `.env.example`:
 
-| Variable | Description | Example / Default |
+| Variable | Description | Example Placeholder |
 | :--- | :--- | :--- |
-| `POSTGRES_DB_USER` | PostgreSQL database username | `mandateguard` |
-| `POSTGRES_DB_PASSWORD` | PostgreSQL database password | `mandate_guard#7369` |
-| `POSTGRES_DB_NAME` | PostgreSQL database name | `mandateguard` |
+| `POSTGRES_DB_USER` | PostgreSQL database username | `db_user_placeholder` |
+| `POSTGRES_DB_PASSWORD` | PostgreSQL database password | `db_password_placeholder` |
+| `POSTGRES_DB_NAME` | PostgreSQL database name | `mandateguard_db` |
 | `POSTGRES_DB_HOST` | Database host address | `localhost` |
 | `POSTGRES_DB_PORT` | Database port number | `5432` |
-| `PAYPAL_CLIENT_ID` | Sandbox App Client ID from developer.paypal.com | *(PayPal Generated String)* |
-| `PAYPAL_CLIENT_SECRET` | Sandbox App Secret from developer.paypal.com | *(PayPal Generated String)* |
+| `PAYPAL_CLIENT_ID` | Sandbox App Client ID from developer.paypal.com | `sandbox_client_id_placeholder` |
+| `PAYPAL_CLIENT_SECRET` | Sandbox App Secret from developer.paypal.com | `sandbox_secret_placeholder` |
 | `PAYPAL_API_BASE` | PayPal API base URL endpoint | `https://api-m.sandbox.paypal.com` |
-| `GROQ_API_KEY` | API Key for Groq LLM Compiler | `gsk_...` |
+| `GROQ_API_KEY` | API Key for Groq LLM Compiler | `groq_api_key_placeholder` |
 | `GROQ_BASE_URL` | Base URL for LLM provider API | `https://api.groq.com/openai/v1` |
-| `GROQ_MODEL` | Primary LLM model for natural language compilation | `openai/gpt-oss-120b` |
+| `GROQ_MODEL` | Primary LLM model for mandate compilation | `llama-3.3-70b-versatile` |
+| `GROQ_DRIFT_MODEL` | Fast LLM model for real-time drift detection | `llama-3.1-8b-instant` |
 
 ---
 
-## MandateGuard Demo Walkthrough
+## Hackathon Evaluation Walkthrough
 
-Follow this 5-step sequence to inspect all capabilities:
+Follow this 5-step sequence during demonstration to inspect all capabilities:
 
 ### Step 1: Initialize the Environment
 - Open `http://localhost:3000` in your browser.
@@ -381,10 +403,10 @@ All **42 unit, integration, and security tests** pass, validating:
 ## Technology Stack
 
 - **Backend Framework:** FastAPI (Python 3.11+)
-- **Database & ORM:** PostgreSQL, SQLAlchemy
+- **Database & Containerization:** PostgreSQL, SQLAlchemy, Docker Compose
 - **Cryptographic Engine:** Cryptography (Ed25519, SHA-256 canonical hashing), WebAuthn / FIDO2 specifications
 - **Payment & Settlement:** PayPal REST API (Orders v2, Disputes v1, Webhooks)
-- **Natural Language Engine:** Groq API / Llama 3 / GPT-OSS
+- **Natural Language & Safety:** Groq API (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`)
 - **Frontend Framework:** Next.js 16 (App Router), React, Tailwind CSS
 - **API Testing:** Postman Collections & Newman CI runner
 - **Cloud Deployment:** Render (Web Service + Managed PostgreSQL)

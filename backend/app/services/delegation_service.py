@@ -15,7 +15,7 @@ class DelegationService:
             return False, "Child expiry extends beyond parent expiry."
 
         if not set(child.allowed_categories).issubset(set(parent.allowed_categories)):
-            return False, "Child allowed categories are not a subset of parent allowed categories."
+            return False, "Child allowed categories are not a subset of parent allowed categories (unauthorized categories)."
 
         if parent.allowed_shipping_destinations:
             if not child.allowed_shipping_destinations:

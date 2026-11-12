@@ -8,6 +8,7 @@ from app.models import Mandate, Delegation, Order, Event, Dispute
 from app.services.audit_service import AuditService
 from app.services.crypto import CryptoService
 from app.services.event_bus import EventBus
+from app.services.paypal_service import PayPalService
 from app.schemas.mandate import MandateSchema
 from app.schemas.preflight import PreFlightRequest
 from app.services.policy_engine import PolicyEngine
@@ -71,6 +72,7 @@ async def seed_demo_environment(db: Session = Depends(get_db)):
         is_revoked=False
     )
     db.add(child_mandate)
+    db.commit()
 
     delegation = Delegation(
         id="del_root_devops",
@@ -152,21 +154,48 @@ async def trigger_act1_happy_path(db: Session = Depends(get_db)):
     )
     result = PolicyEngine.evaluate(rules, req, is_revoked=mandate.is_revoked, db=db)
 
+    paypal_order_id = "PAYPAL_TX_GITHUB_101"
+    approval_url = None
+    try:
+        real_order = PayPalService.create_order(
+            amount=35.0,
+            currency="USD",
+            description="Software Subscription - GitHub Team (MandateGuard Autonomous Agent)"
+        )
+        paypal_order_id = real_order.get("id", paypal_order_id)
+        approval_url = next((l["href"] for l in real_order.get("links", []) if l.get("rel") == "approve"), None)
+    except Exception:
+        pass
+
     AuditService.record_event(
         db=db,
         event_type="PRE_FLIGHT_CHECK",
         mandate_id=mandate.id,
-        payload={"amount": 35.0, "merchant": "GitHub", "decision": result.decision.value, "reason": result.reason}
+        payload={
+            "amount": 35.0,
+            "merchant": "GitHub",
+            "decision": result.decision.value,
+            "reason": result.reason,
+            "paypal_order_id": paypal_order_id
+        }
     )
 
     await EventBus.publish("PRE_FLIGHT_EVALUATED", {
         "mandate_id": mandate.id,
         "decision": result.decision.value,
         "amount": 35.0,
-        "reason": result.reason
+        "reason": f"{result.reason} [PayPal Sandbox Order: {paypal_order_id}]",
+        "paypal_order_id": paypal_order_id,
+        "approval_url": approval_url
     })
 
-    return {"act": 1, "decision": result.decision.value, "reason": result.reason}
+    return {
+        "act": 1,
+        "decision": result.decision.value,
+        "reason": result.reason,
+        "paypal_order_id": paypal_order_id,
+        "approval_url": approval_url
+    }
 
 @router.post("/act2")
 async def trigger_act2_delegation_attack(db: Session = Depends(get_db)):

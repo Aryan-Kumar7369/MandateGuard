@@ -130,3 +130,23 @@ export async function triggerDemoAct3() {
   if (!res.ok) throw new Error('Failed to execute Act 3');
   return res.json();
 }
+
+export async function createPayPalOrder(amount = 45.0, description = 'GitHub Team License') {
+  const res = await fetch(`${API_BASE}/checkout/create-order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, description }),
+  });
+  if (!res.ok) throw new Error('Failed to create PayPal Sandbox order');
+  return res.json();
+}
+
+export async function executePayPalCheckout(payload) {
+  const res = await fetch(`${API_BASE}/checkout/execute`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to capture PayPal Sandbox order');
+  return res.json();
+}

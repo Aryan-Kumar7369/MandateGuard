@@ -34,6 +34,37 @@ class PayPalService:
             return response.json()["access_token"]
 
     @classmethod
+    def create_order(cls, amount: float, currency: str = "USD", description: str = "Agentic Commerce Order") -> dict:
+        _, _, base_url = cls._get_config()
+        token = cls.get_access_token()
+        url = f"{base_url}/v2/checkout/orders"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}"
+        }
+        body = {
+            "intent": "CAPTURE",
+            "purchase_units": [
+                {
+                    "amount": {
+                        "currency_code": currency,
+                        "value": f"{amount:.2f}"
+                    },
+                    "description": description
+                }
+            ]
+        }
+
+        with httpx.Client() as client:
+            response = client.post(url, headers=headers, json=body, timeout=10.0)
+            if response.status_code not in (200, 201):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"PayPal Order Creation failed: {response.text}"
+                )
+            return response.json()
+
+    @classmethod
     def get_order_details(cls, order_id: str) -> dict:
         _, _, base_url = cls._get_config()
         token = cls.get_access_token()

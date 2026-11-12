@@ -10,7 +10,6 @@ from app.services.delegation_service import DelegationService
 
 router = APIRouter(prefix="/api/v1/delegations", tags=["Delegations"])
 
-
 class DelegationNodeResponse(BaseModel):
     mandate_id: str
     user_id: str
@@ -20,7 +19,6 @@ class DelegationNodeResponse(BaseModel):
     parent_mandate_id: str | None = None
     delegated_to: str | None = None
     children: list["DelegationNodeResponse"] = []
-
 
 @router.post("/", response_model=DelegationResponse, status_code=status.HTTP_201_CREATED)
 def create_delegation(request: DelegationCreateRequest, db: Session = Depends(get_db)):
@@ -45,6 +43,8 @@ def create_delegation(request: DelegationCreateRequest, db: Session = Depends(ge
         signature=None,
         is_revoked=False
     )
+    db.add(child_mandate)
+    db.commit()
 
     delegation_id = f"del_{uuid.uuid4().hex[:12]}"
     delegation = Delegation(
@@ -54,14 +54,11 @@ def create_delegation(request: DelegationCreateRequest, db: Session = Depends(ge
         delegated_by=request.delegated_by,
         delegated_to=request.delegated_to
     )
-
-    db.add(child_mandate)
     db.add(delegation)
     db.commit()
     db.refresh(delegation)
 
     return delegation
-
 
 @router.get("/tree/{mandate_id}", response_model=DelegationNodeResponse)
 def get_delegation_tree(mandate_id: str, db: Session = Depends(get_db)):

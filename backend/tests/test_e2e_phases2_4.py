@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-from app.models import Mandate, Delegation, Order, Event
+from app.models import Mandate, Delegation, Order, Event, Dispute
 from app.schemas.mandate import MandateSchema, PreFlightDecision
 from app.schemas.preflight import PreFlightRequest
 from app.services.policy_engine import PolicyEngine
@@ -13,6 +13,7 @@ from app.services.crypto import CryptoService
 from app.services.intent_drift import IntentDriftDetector
 
 def test_e2e_happy_path_delegation_to_capture(db, client):
+    db.query(Dispute).delete()
     db.query(Event).delete()
     db.query(Order).delete()
     db.query(Delegation).delete()

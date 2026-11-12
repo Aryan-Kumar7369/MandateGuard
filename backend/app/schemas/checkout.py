@@ -1,4 +1,3 @@
-import uuid
 from decimal import Decimal
 from pydantic import BaseModel
 from app.schemas.mandate import PreFlightDecision
@@ -17,3 +16,13 @@ class CheckoutExecutionResponse(BaseModel):
     amount: Decimal
     currency: str
     reason: str
+
+class CreateOrderRequest(BaseModel):
+    amount: float
+    currency: str = "USD"
+    description: str = "Software Subscription - GitHub Team"
+
+class CreateOrderResponse(BaseModel):
+    paypal_order_id: str
+    status: str
+    approval_url: str | None = None

@@ -53,6 +53,6 @@ def test_paypal_dispute_webhook_ingestion(db, client):
     assert stored_dispute.status == "OPEN"
 
     # Verify audit event recorded
-    audit_evt = db.query(Event).filter(Event.event_type == "DISPUTE_CREATED").first()
+    audit_evt = db.query(Event).filter(Event.event_type == "DISPUTE_CREATED", Event.mandate_id == "m_dispute_test").first()
     assert audit_evt is not None
     assert audit_evt.mandate_id == "m_dispute_test"

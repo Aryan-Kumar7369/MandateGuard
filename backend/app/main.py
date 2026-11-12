@@ -1,4 +1,10 @@
+from pathlib import Path
 from dotenv import load_dotenv
+import os
+
+root_env = Path(__file__).resolve().parent.parent.parent / ".env"
+if root_env.exists():
+    load_dotenv(root_env)
 load_dotenv()
 
 from fastapi import FastAPI

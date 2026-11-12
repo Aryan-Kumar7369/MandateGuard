@@ -8,12 +8,31 @@ from app.core.database import get_db
 from app.models import Mandate, Order
 from app.schemas.mandate import MandateSchema, PreFlightDecision
 from app.schemas.preflight import PreFlightRequest
-from app.schemas.checkout import CheckoutExecutionRequest, CheckoutExecutionResponse
+from app.schemas.checkout import (
+    CheckoutExecutionRequest,
+    CheckoutExecutionResponse,
+    CreateOrderRequest,
+    CreateOrderResponse
+)
 from app.services.policy_engine import PolicyEngine
 from app.services.paypal_service import PayPalService
 from app.services.audit_service import AuditService
 
 router = APIRouter(prefix="/api/v1/checkout", tags=["Checkout"])
+
+@router.post("/create-order", response_model=CreateOrderResponse)
+def create_paypal_order(request: CreateOrderRequest):
+    order_data = PayPalService.create_order(
+        amount=request.amount,
+        currency=request.currency,
+        description=request.description
+    )
+    approve_url = next((l["href"] for l in order_data.get("links", []) if l.get("rel") == "approve"), None)
+    return CreateOrderResponse(
+        paypal_order_id=order_data["id"],
+        status=order_data["status"],
+        approval_url=approve_url
+    )
 
 @router.post("/execute", response_model=CheckoutExecutionResponse)
 def execute_checkout(

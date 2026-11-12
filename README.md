@@ -18,7 +18,7 @@ Below are interface captures demonstrating the real-time authorization gateway, 
 |                                                                                                   |
 +---------------------------------------------------------------------------------------------------+
 ```
-*(Add screenshot path: `docs/screenshots/dashboard.png`)*
+![Live Dashboard](images/live_dashboard.png)
 
 ```
 +---------------------------------------------------------------------------------------------------+
@@ -28,7 +28,7 @@ Below are interface captures demonstrating the real-time authorization gateway, 
 |                                                                                                   |
 +---------------------------------------------------------------------------------------------------+
 ```
-*(Add screenshot path: `docs/screenshots/paypal-sandbox-checkout.png`)*
+![PayPal Checkout](images/paypal_checkout.png)
 
 ```
 +---------------------------------------------------------------------------------------------------+
@@ -38,7 +38,7 @@ Below are interface captures demonstrating the real-time authorization gateway, 
 |                                                                                                   |
 +---------------------------------------------------------------------------------------------------+
 ```
-*(Add screenshot path: `docs/screenshots/dispute-evidence-bundle.png`)*
+![Dispute & Audit Proof](images/dispute.png)
 
 ---
 
